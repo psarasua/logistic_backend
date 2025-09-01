@@ -28,11 +28,7 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Middleware de autenticación global
-const { protegerAPIs } = require('./middleware/globalAuthMiddleware');
-app.use(protegerAPIs);
-
-// Ruta de prueba
+// RUTAS PÚBLICAS (sin autenticación)
 app.get('/', (req, res) => {
   res.json({
     message: '🚀 API funcionando correctamente',
@@ -41,7 +37,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// Ruta de health check
+// Ruta de health check (PÚBLICA)
 app.get('/health', async (req, res) => {
   try {
     const dbStatus = await testConnection();
@@ -60,7 +56,11 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Importar y usar rutas
+// Middleware de autenticación SOLO para rutas /api
+const { protegerAPIs } = require('./middleware/globalAuthMiddleware');
+app.use('/api', protegerAPIs);
+
+// Importar y usar rutas PROTEGIDAS
 const clienteRoutes = require('./routes/clienteRoutes');
 const camionRoutes = require('./routes/camionRoutes');
 const rutaRoutes = require('./routes/rutaRoutes');
@@ -103,9 +103,11 @@ const startServer = async () => {
 
     // Iniciar servidor
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`�� Servidor corriendo en http://localhost:${PORT}`);
+      console.log(`�� Health check: http://localhost:${PORT}/health`);
       console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔒 Rutas protegidas: /api/*`);
+      console.log(`�� Rutas públicas: /, /health`);
     });
   } catch (error) {
     console.error('❌ Error al iniciar el servidor:', error);
