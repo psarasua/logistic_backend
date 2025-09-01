@@ -28,12 +28,8 @@ const login = async (req, res) => {
     const token = generarToken(usuario);
 
     res.json({
-      success: true,
-      message: 'Login exitoso',
-      data: {
-        usuario,
-        token
-      }
+      token,
+      user: usuario
     });
   } catch (error) {
     console.error('Error en login:', error);
@@ -80,12 +76,8 @@ const registro = async (req, res) => {
     const token = generarToken(nuevoUsuario);
 
     res.status(201).json({
-      success: true,
-      message: 'Usuario registrado exitosamente',
-      data: {
-        usuario: nuevoUsuario,
-        token
-      }
+      token,
+      user: nuevoUsuario
     });
   } catch (error) {
     console.error('Error en registro:', error);
