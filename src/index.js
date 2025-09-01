@@ -56,9 +56,7 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Middleware de autenticación SOLO para rutas /api
-const { protegerAPIs } = require('./middleware/globalAuthMiddleware');
-app.use('/api', protegerAPIs);
+
 
 // Importar y usar rutas PROTEGIDAS
 const clienteRoutes = require('./routes/clienteRoutes');
