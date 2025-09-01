@@ -16,7 +16,7 @@ app.use(helmet());
 // Middleware de CORS
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://tu-dominio.com'] 
+    ? ['https://tu-dominio.com', 'http://localhost:3000']  // ← AGREGAR localhost
     : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
   credentials: true
 }));
@@ -102,7 +102,7 @@ const startServer = async () => {
     }
 
     // Iniciar servidor
-    app.listen(PORT, () => {
+    app.listen(PORT,'0.0.0.0',  () => {
       console.log(`�� Servidor corriendo en http://localhost:${PORT}`);
       console.log(`�� Health check: http://localhost:${PORT}/health`);
       console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
