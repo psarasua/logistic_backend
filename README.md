@@ -98,7 +98,7 @@ npm start
 ## 🔐 **Seguridad**
 
 - **JWT tokens** para autenticación
-- **Encriptación** de contraseñas con bcrypt
+- **Gestión** de contraseñas (sin encriptación)
 - **Middleware** de seguridad global
 - **Validaciones** de entrada
 - **CORS** configurado

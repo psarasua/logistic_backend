@@ -1,5 +1,5 @@
 const { query } = require('../config/database');
-const bcrypt = require('bcryptjs');
+
 
 // Función para obtener todos los usuarios (sin contraseñas)
 const getAllUsuarios = async () => {
@@ -44,13 +44,11 @@ const createUsuario = async (usuarioData) => {
   const { username, password } = usuarioData;
 
   try {
-    // Encriptar contraseña
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // Almacenar contraseña sin encriptar (se recomienda implementar otro método de seguridad)
 
     const result = await query(
       'INSERT INTO usuarios (username, password) VALUES ($1, $2) RETURNING id, username',
-      [username, hashedPassword]
+      [username, password]
     );
     return result.rows[0];
   } catch (error) {
@@ -66,11 +64,9 @@ const updateUsuario = async (id, usuarioData) => {
     let queryText, params;
 
     if (password) {
-      // Si se proporciona nueva contraseña, encriptarla
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      // Si se proporciona nueva contraseña, almacenarla sin encriptar
       queryText = 'UPDATE usuarios SET username = $1, password = $2 WHERE id = $3 RETURNING id, username';
-      params = [username, hashedPassword, id];
+      params = [username, password, id];
     } else {
       // Solo actualizar username
       queryText = 'UPDATE usuarios SET username = $1 WHERE id = $2 RETURNING id, username';
@@ -106,10 +102,8 @@ const verificarCredenciales = async (username, password) => {
       return null;
     }
 
-    // Verificar contraseña
-    const passwordValida = await bcrypt.compare(password, usuario.password);
-    
-    if (!passwordValida) {
+    // Verificar contraseña (comparación directa - se recomienda implementar otro método de seguridad)
+    if (password !== usuario.password) {
       return null;
     }
 
@@ -138,21 +132,17 @@ const cambiarPassword = async (id, passwordActual, nuevaPassword) => {
 
     const usuario = result.rows[0];
 
-    // Verificar contraseña actual
-    const passwordValida = await bcrypt.compare(passwordActual, usuario.password);
-    
-    if (!passwordValida) {
+    // Verificar contraseña actual (comparación directa - se recomienda implementar otro método de seguridad)
+    if (passwordActual !== usuario.password) {
       throw new Error('Contraseña actual incorrecta');
     }
 
-    // Encriptar nueva contraseña
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(nuevaPassword, saltRounds);
+    // Almacenar nueva contraseña sin encriptar (se recomienda implementar otro método de seguridad)
 
     // Actualizar contraseña
     const updateResult = await query(
       'UPDATE usuarios SET password = $1 WHERE id = $2 RETURNING id, username',
-      [hashedPassword, id]
+      [nuevaPassword, id]
     );
 
     return updateResult.rows[0];
