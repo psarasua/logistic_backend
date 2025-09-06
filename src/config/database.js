@@ -1,15 +1,22 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+// Validar que las variables de entorno críticas estén configuradas
+if (!process.env.DATABASE_URL) {
+  console.error('❌ ERROR: DATABASE_URL no está configurada en las variables de entorno');
+  console.error('💡 Copia el archivo .env.example a .env y configura tus credenciales');
+  process.exit(1);
+}
+
 // Configuración de la conexión a Neon Database
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_PbOH1AcBrn7F@ep-plain-sunset-acfy4yn0-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
+  connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
   },
-  max: 20, // máximo número de conexiones en el pool
-  idleTimeoutMillis: 30000, // tiempo máximo que una conexión puede estar inactiva
-  connectionTimeoutMillis: 2000, // tiempo máximo para establecer una conexión
+  max: parseInt(process.env.DB_POOL_MAX) || 20, // máximo número de conexiones en el pool
+  idleTimeoutMillis: parseInt(process.env.DB_POOL_IDLE_TIMEOUT) || 30000, // tiempo máximo que una conexión puede estar inactiva
+  connectionTimeoutMillis: parseInt(process.env.DB_POOL_CONNECTION_TIMEOUT) || 2000, // tiempo máximo para establecer una conexión
 });
 
 // Función para probar la conexión
