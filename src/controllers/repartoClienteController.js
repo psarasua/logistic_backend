@@ -6,12 +6,34 @@ const addCliente = async (req, res) => {
     const { reparto_id, cliente_id } = req.body;
     if (Array.isArray(cliente_id)) {
       for (const cid of cliente_id) {
-        await repartoClienteModel.addClienteToReparto(reparto_id, cid);
+        try {
+          await repartoClienteModel.addClienteToReparto(reparto_id, cid);
+        } catch (err) {
+          if (err.message.includes('duplicate key value')) {
+            return res.status(400).json({
+              success: false,
+              error: `El cliente con ID ${cid} ya está asignado a este reparto.`
+            });
+          } else {
+            throw err;
+          }
+        }
       }
       res.json({ success: true, message: 'Clientes agregados al reparto', clientes: cliente_id });
     } else {
-      await repartoClienteModel.addClienteToReparto(reparto_id, cliente_id);
-      res.json({ success: true, message: 'Cliente agregado al reparto', cliente: cliente_id });
+      try {
+        await repartoClienteModel.addClienteToReparto(reparto_id, cliente_id);
+        res.json({ success: true, message: 'Cliente agregado al reparto', cliente: cliente_id });
+      } catch (err) {
+        if (err.message.includes('duplicate key value')) {
+          return res.status(400).json({
+            success: false,
+            error: `El cliente con ID ${cliente_id} ya está asignado a este reparto.`
+          });
+        } else {
+          throw err;
+        }
+      }
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
