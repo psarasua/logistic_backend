@@ -115,7 +115,6 @@ const updateReparto = async (req, res) => {
 
     // Validaciones detalladas
     const errores = [];
-    if (!repartoData.cliente_id) errores.push("El campo 'cliente_id' es obligatorio");
     if (!repartoData.camion_id) errores.push("El campo 'camion_id' es obligatorio");
     if (!repartoData.ruta_id) errores.push("El campo 'ruta_id' es obligatorio");
     if (errores.length > 0) {
@@ -126,8 +125,7 @@ const updateReparto = async (req, res) => {
     }
 
     // Validar que los IDs sean números enteros
-    if (!Number.isInteger(Number(repartoData.cliente_id)) || 
-        !Number.isInteger(Number(repartoData.camion_id)) || 
+    if (!Number.isInteger(Number(repartoData.camion_id)) || 
         !Number.isInteger(Number(repartoData.ruta_id))) {
       return res.status(400).json({
         success: false,
@@ -137,11 +135,7 @@ const updateReparto = async (req, res) => {
 
     // Verificar que existan las referencias (FK)
     try {
-      await repartoModel.validateReferences(
-        repartoData.cliente_id,
-        repartoData.camion_id,
-        repartoData.ruta_id
-      );
+      await repartoModel.validateReferences(null, repartoData.camion_id, repartoData.ruta_id);
     } catch (validationError) {
       return res.status(400).json({
         success: false,
@@ -149,7 +143,10 @@ const updateReparto = async (req, res) => {
       });
     }
 
-    const repartoActualizado = await repartoModel.updateReparto(id, repartoData);
+    const repartoActualizado = await repartoModel.updateReparto(id, {
+      camion_id: repartoData.camion_id,
+      ruta_id: repartoData.ruta_id
+    });
     
     res.json({
       success: true,
