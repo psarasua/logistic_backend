@@ -49,11 +49,13 @@ const createCamion = async (req, res) => {
   try {
     const { nombre } = req.body;
     
-    // Validaciones básicas
-    if (!nombre || nombre.trim() === '') {
+    // Validaciones detalladas
+    const errores = [];
+    if (!nombre || nombre.trim() === '') errores.push("El campo 'nombre' es obligatorio");
+    if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'El nombre del camión es obligatorio'
+        errors: errores
       });
     }
 
@@ -88,11 +90,13 @@ const updateCamion = async (req, res) => {
       });
     }
 
-    // Validaciones básicas
-    if (!nombre || nombre.trim() === '') {
+    // Validaciones detalladas
+    const errores = [];
+    if (!nombre || nombre.trim() === '') errores.push("El campo 'nombre' es obligatorio");
+    if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'El nombre del camión es obligatorio'
+        errors: errores
       });
     }
 

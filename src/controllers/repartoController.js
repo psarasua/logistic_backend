@@ -49,11 +49,15 @@ const createReparto = async (req, res) => {
   try {
     const repartoData = req.body;
     
-    // Validaciones básicas
-    if (!repartoData.cliente_id || !repartoData.camion_id || !repartoData.ruta_id) {
+    // Validaciones detalladas
+    const errores = [];
+    if (!repartoData.cliente_id) errores.push("El campo 'cliente_id' es obligatorio");
+    if (!repartoData.camion_id) errores.push("El campo 'camion_id' es obligatorio");
+    if (!repartoData.ruta_id) errores.push("El campo 'ruta_id' es obligatorio");
+    if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Cliente ID, Camión ID y Ruta ID son obligatorios'
+        errors: errores
       });
     }
 
@@ -112,11 +116,15 @@ const updateReparto = async (req, res) => {
       });
     }
 
-    // Validaciones básicas
-    if (!repartoData.cliente_id || !repartoData.camion_id || !repartoData.ruta_id) {
+    // Validaciones detalladas
+    const errores = [];
+    if (!repartoData.cliente_id) errores.push("El campo 'cliente_id' es obligatorio");
+    if (!repartoData.camion_id) errores.push("El campo 'camion_id' es obligatorio");
+    if (!repartoData.ruta_id) errores.push("El campo 'ruta_id' es obligatorio");
+    if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Cliente ID, Camión ID y Ruta ID son obligatorios'
+        errors: errores
       });
     }
 

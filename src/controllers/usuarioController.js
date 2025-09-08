@@ -49,11 +49,14 @@ const registro = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Validaciones básicas
-    if (!username || !password) {
+    // Validaciones detalladas
+    const errores = [];
+    if (!username) errores.push("El campo 'username' es obligatorio");
+    if (!password) errores.push("El campo 'password' es obligatorio");
+    if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Username y password son obligatorios'
+        errors: errores
       });
     }
 
@@ -210,11 +213,14 @@ const createUsuario = async (req, res) => {
   try {
     const { username, password } = req.body;
     
-    // Validaciones básicas
-    if (!username || !password) {
+    // Validaciones detalladas
+    const errores = [];
+    if (!username) errores.push("El campo 'username' es obligatorio");
+    if (!password) errores.push("El campo 'password' es obligatorio");
+    if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Username y password son obligatorios'
+        errors: errores
       });
     }
 
@@ -265,11 +271,13 @@ const updateUsuario = async (req, res) => {
       });
     }
 
-    // Validaciones básicas
-    if (!username) {
+    // Validaciones detalladas
+    const errores = [];
+    if (!username) errores.push("El campo 'username' es obligatorio");
+    if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Username es obligatorio'
+        errors: errores
       });
     }
 

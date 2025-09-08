@@ -112,8 +112,8 @@ const updateCliente = async (id, clienteData) => {
 const deleteCliente = async (id) => {
   try {
     const result = await query(
-      'UPDATE clientes SET estado = $1 WHERE id = $2 RETURNING *',
-      ['Inactivo', id]
+      'DELETE FROM clientes WHERE id = $1 RETURNING *',
+      [id]
     );
     return result.rows[0];
   } catch (error) {

@@ -49,11 +49,15 @@ const createCliente = async (req, res) => {
   try {
     const clienteData = req.body;
     
-    // Validaciones básicas
-    if (!clienteData.razonsocial || !clienteData.nombre || !clienteData.direccion) {
+    // Validaciones detalladas
+    const errores = [];
+    if (!clienteData.razonsocial) errores.push("El campo 'razonsocial' es obligatorio");
+    if (!clienteData.nombre) errores.push("El campo 'nombre' es obligatorio");
+    if (!clienteData.direccion) errores.push("El campo 'direccion' es obligatorio");
+    if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Razón social, nombre y dirección son obligatorios'
+        errors: errores
       });
     }
 
@@ -109,11 +113,15 @@ const updateCliente = async (req, res) => {
       });
     }
 
-    // Validaciones básicas
-    if (!clienteData.razonsocial || !clienteData.nombre || !clienteData.direccion) {
+    // Validaciones detalladas
+    const errores = [];
+    if (!clienteData.razonsocial) errores.push("El campo 'razonsocial' es obligatorio");
+    if (!clienteData.nombre) errores.push("El campo 'nombre' es obligatorio");
+    if (!clienteData.direccion) errores.push("El campo 'direccion' es obligatorio");
+    if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Razón social, nombre y dirección son obligatorios'
+        errors: errores
       });
     }
 
