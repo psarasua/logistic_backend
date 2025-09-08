@@ -130,8 +130,18 @@ const deleteRuta = async (req, res) => {
       });
     }
 
+    // Verificar si la ruta está siendo usada en repartos
+    const { getRepartosByRuta } = require('../models/repartoModel');
+    const repartos = await getRepartosByRuta(id);
+    if (repartos.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No se puede eliminar la ruta porque está siendo usada en repartos',
+        repartosRelacionados: repartos.map(r => r.id)
+      });
+    }
+
     const rutaEliminada = await rutaModel.deleteRuta(id);
-    
     res.json({
       success: true,
       message: 'Ruta eliminada exitosamente',

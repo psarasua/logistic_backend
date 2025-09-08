@@ -130,8 +130,18 @@ const deleteCamion = async (req, res) => {
       });
     }
 
+    // Verificar si el camión está siendo usado en repartos
+    const { getRepartosByCamion } = require('../models/repartoModel');
+    const repartos = await getRepartosByCamion(id);
+    if (repartos.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No se puede eliminar el camión porque está siendo usado en repartos',
+        repartosRelacionados: repartos.map(r => r.id)
+      });
+    }
+
     const camionEliminado = await camionModel.deleteCamion(id);
-    
     res.json({
       success: true,
       message: 'Camión eliminado exitosamente',

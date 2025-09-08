@@ -176,8 +176,18 @@ const deleteCliente = async (req, res) => {
       });
     }
 
+    // Verificar si el cliente está siendo usado en repartos
+    const { getRepartosByCliente } = require('../models/repartoModel');
+    const repartos = await getRepartosByCliente(id);
+    if (repartos.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No se puede eliminar el cliente porque está siendo usado en repartos',
+        repartosRelacionados: repartos.map(r => r.id)
+      });
+    }
+
     const clienteEliminado = await clienteModel.deleteCliente(id);
-    
     res.json({
       success: true,
       message: 'Cliente eliminado exitosamente',
