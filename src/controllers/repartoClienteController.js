@@ -4,8 +4,15 @@ const repartoClienteModel = require('../models/repartoClienteModel');
 const addCliente = async (req, res) => {
   try {
     const { reparto_id, cliente_id } = req.body;
-    await repartoClienteModel.addClienteToReparto(reparto_id, cliente_id);
-    res.json({ success: true, message: 'Cliente agregado al reparto' });
+    if (Array.isArray(cliente_id)) {
+      for (const cid of cliente_id) {
+        await repartoClienteModel.addClienteToReparto(reparto_id, cid);
+      }
+      res.json({ success: true, message: 'Clientes agregados al reparto', clientes: cliente_id });
+    } else {
+      await repartoClienteModel.addClienteToReparto(reparto_id, cliente_id);
+      res.json({ success: true, message: 'Cliente agregado al reparto', cliente: cliente_id });
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
