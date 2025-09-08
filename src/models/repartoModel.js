@@ -8,8 +8,9 @@ const getAllRepartos = async () => {
         r.*,
         cam.nombre as camion_nombre,
         ru.nombre as ruta_nombre,
-        ARRAY_AGG(c.id) AS clientes_ids,
-        ARRAY_AGG(c.razonsocial) AS clientes_nombres
+        COALESCE(ARRAY_AGG(c.id) FILTER (WHERE c.id IS NOT NULL), '{}') AS clientes_ids,
+        COALESCE(ARRAY_AGG(c.razonsocial) FILTER (WHERE c.razonsocial IS NOT NULL), '{}') AS clientes_nombres,
+        COUNT(c.id) AS total_clientes
       FROM repartos r
       LEFT JOIN reparto_cliente rc ON r.id = rc.reparto_id
       LEFT JOIN clientes c ON rc.cliente_id = c.id
