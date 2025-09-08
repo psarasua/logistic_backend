@@ -50,34 +50,13 @@ const getRepartoById = async (id) => {
 
 // Función para crear un nuevo reparto
 const createReparto = async (repartoData) => {
-  const { cliente_id, camion_id, ruta_id } = repartoData;
-  // cliente_id ahora es un array
+  const { camion_id, ruta_id } = repartoData;
   try {
-    // Crear el reparto sin cliente_id
     const result = await query(
       'INSERT INTO repartos (camion_id, ruta_id) VALUES ($1, $2) RETURNING *',
       [camion_id, ruta_id]
     );
-    const reparto = result.rows[0];
-
-    // Insertar los clientes en la tabla intermedia
-    if (Array.isArray(cliente_id)) {
-      for (const cid of cliente_id) {
-        await query(
-          'INSERT INTO reparto_cliente (reparto_id, cliente_id) VALUES ($1, $2)',
-          [reparto.id, cid]
-        );
-      }
-    } else {
-      // Si solo viene un cliente
-      await query(
-        'INSERT INTO reparto_cliente (reparto_id, cliente_id) VALUES ($1, $2)',
-        [reparto.id, cliente_id]
-      );
-    }
-
-    // Retornar el reparto creado
-    return reparto;
+    return result.rows[0];
   } catch (error) {
     throw new Error(`Error al crear reparto: ${error.message}`);
   }
