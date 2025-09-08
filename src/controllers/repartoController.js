@@ -51,7 +51,7 @@ const createReparto = async (req, res) => {
     
     // Validaciones detalladas
     const errores = [];
-    if (!repartoData.cliente_id) errores.push("El campo 'cliente_id' es obligatorio");
+    if (!repartoData.cliente_id || (Array.isArray(repartoData.cliente_id) && repartoData.cliente_id.length === 0)) errores.push("El campo 'cliente_id' es obligatorio y debe ser un array con al menos un elemento");
     if (!repartoData.camion_id) errores.push("El campo 'camion_id' es obligatorio");
     if (!repartoData.ruta_id) errores.push("El campo 'ruta_id' es obligatorio");
     if (errores.length > 0) {
@@ -62,8 +62,9 @@ const createReparto = async (req, res) => {
     }
 
     // Validar que los IDs sean números enteros
-    if (!Number.isInteger(Number(repartoData.cliente_id)) || 
-        !Number.isInteger(Number(repartoData.camion_id)) || 
+    const clientes = Array.isArray(repartoData.cliente_id) ? repartoData.cliente_id : [repartoData.cliente_id];
+    if (!clientes.every(cid => Number.isInteger(Number(cid))) ||
+        !Number.isInteger(Number(repartoData.camion_id)) ||
         !Number.isInteger(Number(repartoData.ruta_id))) {
       return res.status(400).json({
         success: false,
@@ -71,13 +72,12 @@ const createReparto = async (req, res) => {
       });
     }
 
-    // Verificar que existan las referencias (FK)
+    // Verificar que existan las referencias (FK) para cada cliente
     try {
-      await repartoModel.validateReferences(
-        repartoData.cliente_id,
-        repartoData.camion_id,
-        repartoData.ruta_id
-      );
+      for (const cid of clientes) {
+        await repartoModel.validateReferences(cid, null, null);
+      }
+      await repartoModel.validateReferences(null, repartoData.camion_id, repartoData.ruta_id);
     } catch (validationError) {
       return res.status(400).json({
         success: false,
@@ -85,8 +85,12 @@ const createReparto = async (req, res) => {
       });
     }
 
-    const nuevoReparto = await repartoModel.createReparto(repartoData);
-    
+    const nuevoReparto = await repartoModel.createReparto({
+      cliente_id: clientes,
+      camion_id: repartoData.camion_id,
+      ruta_id: repartoData.ruta_id
+    });
+
     res.status(201).json({
       success: true,
       message: 'Reparto creado exitosamente',

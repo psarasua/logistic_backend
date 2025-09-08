@@ -64,12 +64,14 @@ const camionRoutes = require('./routes/camionRoutes');
 const rutaRoutes = require('./routes/rutaRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const repartoRoutes = require('./routes/repartoRoutes');
+const repartoClienteRoutes = require('./routes/repartoClienteRoutes');
 
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/camiones', camionRoutes);
 app.use('/api/rutas', rutaRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/repartos', repartoRoutes);
+app.use('/api/reparto-cliente', repartoClienteRoutes);
 
 // Middleware de manejo de errores
 app.use((error, req, res, next) => {

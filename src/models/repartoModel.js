@@ -6,13 +6,16 @@ const getAllRepartos = async () => {
     const result = await query(`
       SELECT 
         r.*,
-        c.razonsocial as cliente_nombre,
         cam.nombre as camion_nombre,
-        ru.nombre as ruta_nombre
+        ru.nombre as ruta_nombre,
+        ARRAY_AGG(c.id) AS clientes_ids,
+        ARRAY_AGG(c.razonsocial) AS clientes_nombres
       FROM repartos r
-      LEFT JOIN clientes c ON r.cliente_id = c.id
+      LEFT JOIN reparto_cliente rc ON r.id = rc.reparto_id
+      LEFT JOIN clientes c ON rc.cliente_id = c.id
       LEFT JOIN camiones cam ON r.camion_id = cam.id
       LEFT JOIN rutas ru ON r.ruta_id = ru.id
+      GROUP BY r.id, cam.nombre, ru.nombre
       ORDER BY r.id DESC
     `);
     return result.rows;
@@ -27,16 +30,17 @@ const getRepartoById = async (id) => {
     const result = await query(`
       SELECT 
         r.*,
-        c.razonsocial as cliente_nombre,
-        c.direccion as cliente_direccion,
-        c.telefono as cliente_telefono,
         cam.nombre as camion_nombre,
-        ru.nombre as ruta_nombre
+        ru.nombre as ruta_nombre,
+        ARRAY_AGG(c.id) AS clientes_ids,
+        ARRAY_AGG(c.razonsocial) AS clientes_nombres
       FROM repartos r
-      LEFT JOIN clientes c ON r.cliente_id = c.id
+      LEFT JOIN reparto_cliente rc ON r.id = rc.reparto_id
+      LEFT JOIN clientes c ON rc.cliente_id = c.id
       LEFT JOIN camiones cam ON r.camion_id = cam.id
       LEFT JOIN rutas ru ON r.ruta_id = ru.id
       WHERE r.id = $1
+      GROUP BY r.id, cam.nombre, ru.nombre
     `, [id]);
     return result.rows[0];
   } catch (error) {
@@ -47,13 +51,33 @@ const getRepartoById = async (id) => {
 // Función para crear un nuevo reparto
 const createReparto = async (repartoData) => {
   const { cliente_id, camion_id, ruta_id } = repartoData;
-
+  // cliente_id ahora es un array
   try {
+    // Crear el reparto sin cliente_id
     const result = await query(
-      'INSERT INTO repartos (cliente_id, camion_id, ruta_id) VALUES ($1, $2, $3) RETURNING *',
-      [cliente_id, camion_id, ruta_id]
+      'INSERT INTO repartos (camion_id, ruta_id) VALUES ($1, $2) RETURNING *',
+      [camion_id, ruta_id]
     );
-    return result.rows[0];
+    const reparto = result.rows[0];
+
+    // Insertar los clientes en la tabla intermedia
+    if (Array.isArray(cliente_id)) {
+      for (const cid of cliente_id) {
+        await query(
+          'INSERT INTO reparto_cliente (reparto_id, cliente_id) VALUES ($1, $2)',
+          [reparto.id, cid]
+        );
+      }
+    } else {
+      // Si solo viene un cliente
+      await query(
+        'INSERT INTO reparto_cliente (reparto_id, cliente_id) VALUES ($1, $2)',
+        [reparto.id, cliente_id]
+      );
+    }
+
+    // Retornar el reparto creado
+    return reparto;
   } catch (error) {
     throw new Error(`Error al crear reparto: ${error.message}`);
   }
