@@ -1,13 +1,13 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 // Middleware para verificar token JWT
 const verificarToken = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
+  const token = req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
     return res.status(401).json({
       success: false,
-      error: 'Token de acceso requerido'
+      error: "Token de acceso requerido",
     });
   }
 
@@ -18,14 +18,14 @@ const verificarToken = (req, res, next) => {
   } catch (error) {
     return res.status(401).json({
       success: false,
-      error: 'Token inválido'
+      error: "Token inválido",
     });
   }
 };
 
 // Middleware opcional para verificar token (no falla si no hay token)
 const verificarTokenOpcional = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
+  const token = req.header("Authorization")?.replace("Bearer ", "");
 
   if (token) {
     try {
@@ -43,13 +43,14 @@ const verificarTokenOpcional = (req, res, next) => {
 // Función para generar token JWT
 const generarToken = (usuario) => {
   return jwt.sign(
-    { 
-      id: usuario.id, 
-      username: usuario.username 
+    {
+      id: usuario.id,
+      username: usuario.username,
+      email: usuario.email,
     },
     process.env.JWT_SECRET,
-    { 
-      expiresIn: process.env.JWT_EXPIRES_IN || '24h' 
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN || "24h",
     }
   );
 };
@@ -57,5 +58,5 @@ const generarToken = (usuario) => {
 module.exports = {
   verificarToken,
   verificarTokenOpcional,
-  generarToken
+  generarToken,
 };

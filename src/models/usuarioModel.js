@@ -1,11 +1,11 @@
-const { query } = require('../config/database');
-
+const { query } = require("../config/database");
+const bcrypt = require("bcrypt");
 
 // Función para obtener todos los usuarios (sin contraseñas)
 const getAllUsuarios = async () => {
   try {
     const result = await query(
-      'SELECT id, username FROM usuarios ORDER BY username'
+      "SELECT id, username, email, nombre_completo, created_at FROM usuarios ORDER BY username"
     );
     return result.rows;
   } catch (error) {
@@ -17,7 +17,7 @@ const getAllUsuarios = async () => {
 const getUsuarioById = async (id) => {
   try {
     const result = await query(
-      'SELECT id, username FROM usuarios WHERE id = $1',
+      "SELECT id, username, email, nombre_completo, created_at FROM usuarios WHERE id = $1",
       [id]
     );
     return result.rows[0];
@@ -30,7 +30,7 @@ const getUsuarioById = async (id) => {
 const getUsuarioByUsername = async (username) => {
   try {
     const result = await query(
-      'SELECT id, username, password FROM usuarios WHERE username = $1',
+      "SELECT id, username, email, nombre_completo, password FROM usuarios WHERE username = $1",
       [username]
     );
     return result.rows[0];
@@ -39,16 +39,31 @@ const getUsuarioByUsername = async (username) => {
   }
 };
 
+// Función para obtener usuario por email
+const getUsuarioByEmail = async (email) => {
+  try {
+    const result = await query(
+      "SELECT id, username, email, nombre_completo FROM usuarios WHERE email = $1",
+      [email]
+    );
+    return result.rows[0];
+  } catch (error) {
+    throw new Error(`Error al obtener usuario por email: ${error.message}`);
+  }
+};
+
 // Función para crear un nuevo usuario
 const createUsuario = async (usuarioData) => {
-  const { username, password } = usuarioData;
+  const { username, password, email, nombre_completo } = usuarioData;
 
   try {
-    // Almacenar contraseña sin encriptar (se recomienda implementar otro método de seguridad)
+    // Hash de la contraseña con bcrypt
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const result = await query(
-      'INSERT INTO usuarios (username, password) VALUES ($1, $2) RETURNING id, username',
-      [username, password]
+      "INSERT INTO usuarios (username, email, password, nombre_completo) VALUES ($1, $2, $3, $4) RETURNING id, username, email, nombre_completo",
+      [username, email, hashedPassword, nombre_completo]
     );
     return result.rows[0];
   } catch (error) {
@@ -58,19 +73,23 @@ const createUsuario = async (usuarioData) => {
 
 // Función para actualizar un usuario
 const updateUsuario = async (id, usuarioData) => {
-  const { username, password } = usuarioData;
+  const { username, password, email, nombre_completo } = usuarioData;
 
   try {
     let queryText, params;
 
     if (password) {
-      // Si se proporciona nueva contraseña, almacenarla sin encriptar
-      queryText = 'UPDATE usuarios SET username = $1, password = $2 WHERE id = $3 RETURNING id, username';
-      params = [username, password, id];
+      // Si se proporciona nueva contraseña, hashearla
+      const saltRounds = 12;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      queryText =
+        "UPDATE usuarios SET username = $1, password = $2, email = $3, nombre_completo = $4 WHERE id = $5 RETURNING id, username, email, nombre_completo";
+      params = [username, hashedPassword, email, nombre_completo, id];
     } else {
-      // Solo actualizar username
-      queryText = 'UPDATE usuarios SET username = $1 WHERE id = $2 RETURNING id, username';
-      params = [username, id];
+      // Solo actualizar otros campos
+      queryText =
+        "UPDATE usuarios SET username = $1, email = $2, nombre_completo = $3 WHERE id = $4 RETURNING id, username, email, nombre_completo";
+      params = [username, email, nombre_completo, id];
     }
 
     const result = await query(queryText, params);
@@ -84,7 +103,7 @@ const updateUsuario = async (id, usuarioData) => {
 const deleteUsuario = async (id) => {
   try {
     const result = await query(
-      'DELETE FROM usuarios WHERE id = $1 RETURNING id, username',
+      "DELETE FROM usuarios WHERE id = $1 RETURNING id, username, email, nombre_completo",
       [id]
     );
     return result.rows[0];
@@ -93,24 +112,27 @@ const deleteUsuario = async (id) => {
   }
 };
 
-// Función para verificar credenciales de usuario
+// Función para verificar credenciales de usuario (con hash)
 const verificarCredenciales = async (username, password) => {
   try {
     const usuario = await getUsuarioByUsername(username);
-    
+
     if (!usuario) {
       return null;
     }
 
-    // Verificar contraseña (comparación directa - se recomienda implementar otro método de seguridad)
-    if (password !== usuario.password) {
+    // Verificar contraseña hasheada con bcrypt
+    const passwordValida = await bcrypt.compare(password, usuario.password);
+    if (!passwordValida) {
       return null;
     }
 
     // Retornar usuario sin contraseña
     return {
       id: usuario.id,
-      username: usuario.username
+      username: usuario.username,
+      email: usuario.email,
+      nombre_completo: usuario.nombre_completo,
     };
   } catch (error) {
     throw new Error(`Error al verificar credenciales: ${error.message}`);
@@ -122,27 +144,33 @@ const cambiarPassword = async (id, passwordActual, nuevaPassword) => {
   try {
     // Obtener usuario con contraseña actual
     const result = await query(
-      'SELECT id, password FROM usuarios WHERE id = $1',
+      "SELECT id, password FROM usuarios WHERE id = $1",
       [id]
     );
-    
+
     if (result.rows.length === 0) {
-      throw new Error('Usuario no encontrado');
+      throw new Error("Usuario no encontrado");
     }
 
     const usuario = result.rows[0];
 
-    // Verificar contraseña actual (comparación directa - se recomienda implementar otro método de seguridad)
-    if (passwordActual !== usuario.password) {
-      throw new Error('Contraseña actual incorrecta');
+    // Verificar contraseña actual con bcrypt
+    const passwordValida = await bcrypt.compare(
+      passwordActual,
+      usuario.password
+    );
+    if (!passwordValida) {
+      throw new Error("Contraseña actual incorrecta");
     }
 
-    // Almacenar nueva contraseña sin encriptar (se recomienda implementar otro método de seguridad)
+    // Hash de la nueva contraseña
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(nuevaPassword, saltRounds);
 
     // Actualizar contraseña
     const updateResult = await query(
-      'UPDATE usuarios SET password = $1 WHERE id = $2 RETURNING id, username',
-      [nuevaPassword, id]
+      "UPDATE usuarios SET password = $1 WHERE id = $2 RETURNING id, username, email, nombre_completo",
+      [hashedPassword, id]
     );
 
     return updateResult.rows[0];
@@ -155,7 +183,7 @@ const cambiarPassword = async (id, passwordActual, nuevaPassword) => {
 const searchUsuarios = async (searchTerm) => {
   try {
     const result = await query(
-      'SELECT id, username FROM usuarios WHERE username ILIKE $1 ORDER BY username',
+      "SELECT id, username, email, nombre_completo FROM usuarios WHERE username ILIKE $1 ORDER BY username",
       [`%${searchTerm}%`]
     );
     return result.rows;
@@ -168,10 +196,11 @@ module.exports = {
   getAllUsuarios,
   getUsuarioById,
   getUsuarioByUsername,
+  getUsuarioByEmail,
   createUsuario,
   updateUsuario,
   deleteUsuario,
   verificarCredenciales,
   cambiarPassword,
-  searchUsuarios
+  searchUsuarios,
 };

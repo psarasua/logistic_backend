@@ -1,5 +1,5 @@
-const usuarioModel = require('../models/usuarioModel');
-const { generarToken } = require('../middleware/authMiddleware');
+const usuarioModel = require("../models/usuarioModel");
+const { generarToken } = require("../middleware/authMiddleware");
 
 // Controlador para login
 const login = async (req, res) => {
@@ -10,17 +10,20 @@ const login = async (req, res) => {
     if (!username || !password) {
       return res.status(400).json({
         success: false,
-        error: 'Username y password son obligatorios'
+        error: "Username y password son obligatorios",
       });
     }
 
     // Verificar credenciales
-    const usuario = await usuarioModel.verificarCredenciales(username, password);
+    const usuario = await usuarioModel.verificarCredenciales(
+      username,
+      password
+    );
 
     if (!usuario) {
       return res.status(401).json({
         success: false,
-        error: 'Credenciales inválidas'
+        error: "Credenciales inválidas",
       });
     }
 
@@ -29,17 +32,17 @@ const login = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Login exitoso',
+      message: "Login exitoso",
       data: {
         usuario,
-        token
-      }
+        token,
+      },
     });
   } catch (error) {
-    console.error('Error en login:', error);
+    console.error("Error en login:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -47,23 +50,35 @@ const login = async (req, res) => {
 // Controlador para registro
 const registro = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, email, nombre_completo } = req.body;
 
     // Validaciones detalladas
     const errores = [];
     if (!username) errores.push("El campo 'username' es obligatorio");
     if (!password) errores.push("El campo 'password' es obligatorio");
+    if (!email) errores.push("El campo 'email' es obligatorio");
+    if (!nombre_completo)
+      errores.push("El campo 'nombre_completo' es obligatorio");
     if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        errors: errores
+        errors: errores,
+      });
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: "El formato del email no es válido",
       });
     }
 
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        error: 'La contraseña debe tener al menos 6 caracteres'
+        error: "La contraseña debe tener al menos 6 caracteres",
       });
     }
 
@@ -72,29 +87,43 @@ const registro = async (req, res) => {
     if (usuarioExistente) {
       return res.status(400).json({
         success: false,
-        error: 'El username ya está en uso'
+        error: "El username ya está en uso",
+      });
+    }
+
+    // Verificar si el email ya existe
+    const emailExistente = await usuarioModel.getUsuarioByEmail(email);
+    if (emailExistente) {
+      return res.status(400).json({
+        success: false,
+        error: "El email ya está en uso",
       });
     }
 
     // Crear nuevo usuario
-    const nuevoUsuario = await usuarioModel.createUsuario({ username, password });
+    const nuevoUsuario = await usuarioModel.createUsuario({
+      username,
+      password,
+      email,
+      nombre_completo,
+    });
 
     // Generar token JWT
     const token = generarToken(nuevoUsuario);
 
     res.status(201).json({
       success: true,
-      message: 'Usuario registrado exitosamente',
+      message: "Usuario registrado exitosamente",
       data: {
         usuario: nuevoUsuario,
-        token
-      }
+        token,
+      },
     });
   } catch (error) {
-    console.error('Error en registro:', error);
+    console.error("Error en registro:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -107,19 +136,19 @@ const getPerfil = async (req, res) => {
     if (!usuario) {
       return res.status(404).json({
         success: false,
-        error: 'Usuario no encontrado'
+        error: "Usuario no encontrado",
       });
     }
 
     res.json({
       success: true,
-      data: usuario
+      data: usuario,
     });
   } catch (error) {
-    console.error('Error en getPerfil:', error);
+    console.error("Error en getPerfil:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -133,14 +162,14 @@ const cambiarPassword = async (req, res) => {
     if (!passwordActual || !nuevaPassword) {
       return res.status(400).json({
         success: false,
-        error: 'Contraseña actual y nueva contraseña son obligatorias'
+        error: "Contraseña actual y nueva contraseña son obligatorias",
       });
     }
 
     if (nuevaPassword.length < 6) {
       return res.status(400).json({
         success: false,
-        error: 'La nueva contraseña debe tener al menos 6 caracteres'
+        error: "La nueva contraseña debe tener al menos 6 caracteres",
       });
     }
 
@@ -152,14 +181,14 @@ const cambiarPassword = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Contraseña cambiada exitosamente',
-      data: usuarioActualizado
+      message: "Contraseña cambiada exitosamente",
+      data: usuarioActualizado,
     });
   } catch (error) {
-    console.error('Error en cambiarPassword:', error);
+    console.error("Error en cambiarPassword:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -171,13 +200,13 @@ const getAllUsuarios = async (req, res) => {
     res.json({
       success: true,
       data: usuarios,
-      count: usuarios.length
+      count: usuarios.length,
     });
   } catch (error) {
-    console.error('Error en getAllUsuarios:', error);
+    console.error("Error en getAllUsuarios:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -187,23 +216,23 @@ const getUsuarioById = async (req, res) => {
   try {
     const { id } = req.params;
     const usuario = await usuarioModel.getUsuarioById(id);
-    
+
     if (!usuario) {
       return res.status(404).json({
         success: false,
-        error: 'Usuario no encontrado'
+        error: "Usuario no encontrado",
       });
     }
 
     res.json({
       success: true,
-      data: usuario
+      data: usuario,
     });
   } catch (error) {
-    console.error('Error en getUsuarioById:', error);
+    console.error("Error en getUsuarioById:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -211,23 +240,35 @@ const getUsuarioById = async (req, res) => {
 // Controlador para crear un nuevo usuario (solo admin)
 const createUsuario = async (req, res) => {
   try {
-    const { username, password } = req.body;
-    
+    const { username, password, email, nombre_completo } = req.body;
+
     // Validaciones detalladas
     const errores = [];
     if (!username) errores.push("El campo 'username' es obligatorio");
     if (!password) errores.push("El campo 'password' es obligatorio");
+    if (!email) errores.push("El campo 'email' es obligatorio");
+    if (!nombre_completo)
+      errores.push("El campo 'nombre_completo' es obligatorio");
     if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        errors: errores
+        errors: errores,
+      });
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: "El formato del email no es válido",
       });
     }
 
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        error: 'La contraseña debe tener al menos 6 caracteres'
+        error: "La contraseña debe tener al menos 6 caracteres",
       });
     }
 
@@ -236,22 +277,36 @@ const createUsuario = async (req, res) => {
     if (usuarioExistente) {
       return res.status(400).json({
         success: false,
-        error: 'El username ya está en uso'
+        error: "El username ya está en uso",
       });
     }
 
-    const nuevoUsuario = await usuarioModel.createUsuario({ username, password });
-    
+    // Verificar si el email ya existe
+    const emailExistente = await usuarioModel.getUsuarioByEmail(email);
+    if (emailExistente) {
+      return res.status(400).json({
+        success: false,
+        error: "El email ya está en uso",
+      });
+    }
+
+    const nuevoUsuario = await usuarioModel.createUsuario({
+      username,
+      password,
+      email,
+      nombre_completo,
+    });
+
     res.status(201).json({
       success: true,
-      message: 'Usuario creado exitosamente',
-      data: nuevoUsuario
+      message: "Usuario creado exitosamente",
+      data: nuevoUsuario,
     });
   } catch (error) {
-    console.error('Error en createUsuario:', error);
+    console.error("Error en createUsuario:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -267,7 +322,7 @@ const updateUsuario = async (req, res) => {
     if (!usuarioExistente) {
       return res.status(404).json({
         success: false,
-        error: 'Usuario no encontrado'
+        error: "Usuario no encontrado",
       });
     }
 
@@ -277,40 +332,45 @@ const updateUsuario = async (req, res) => {
     if (errores.length > 0) {
       return res.status(400).json({
         success: false,
-        errors: errores
+        errors: errores,
       });
     }
 
     if (password && password.length < 6) {
       return res.status(400).json({
         success: false,
-        error: 'La contraseña debe tener al menos 6 caracteres'
+        error: "La contraseña debe tener al menos 6 caracteres",
       });
     }
 
     // Verificar duplicados (excluyendo el usuario actual)
     if (username !== usuarioExistente.username) {
-      const existingByUsername = await usuarioModel.getUsuarioByUsername(username);
+      const existingByUsername = await usuarioModel.getUsuarioByUsername(
+        username
+      );
       if (existingByUsername) {
         return res.status(400).json({
           success: false,
-          error: 'El username ya está en uso'
+          error: "El username ya está en uso",
         });
       }
     }
 
-    const usuarioActualizado = await usuarioModel.updateUsuario(id, { username, password });
-    
+    const usuarioActualizado = await usuarioModel.updateUsuario(id, {
+      username,
+      password,
+    });
+
     res.json({
       success: true,
-      message: 'Usuario actualizado exitosamente',
-      data: usuarioActualizado
+      message: "Usuario actualizado exitosamente",
+      data: usuarioActualizado,
     });
   } catch (error) {
-    console.error('Error en updateUsuario:', error);
+    console.error("Error en updateUsuario:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -325,7 +385,7 @@ const deleteUsuario = async (req, res) => {
     if (!usuarioExistente) {
       return res.status(404).json({
         success: false,
-        error: 'Usuario no encontrado'
+        error: "Usuario no encontrado",
       });
     }
 
@@ -333,22 +393,22 @@ const deleteUsuario = async (req, res) => {
     if (parseInt(id) === req.usuario.id) {
       return res.status(400).json({
         success: false,
-        error: 'No puedes eliminar tu propio usuario'
+        error: "No puedes eliminar tu propio usuario",
       });
     }
 
     const usuarioEliminado = await usuarioModel.deleteUsuario(id);
-    
+
     res.json({
       success: true,
-      message: 'Usuario eliminado exitosamente',
-      data: usuarioEliminado
+      message: "Usuario eliminado exitosamente",
+      data: usuarioEliminado,
     });
   } catch (error) {
-    console.error('Error en deleteUsuario:', error);
+    console.error("Error en deleteUsuario:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -357,27 +417,27 @@ const deleteUsuario = async (req, res) => {
 const searchUsuarios = async (req, res) => {
   try {
     const { q } = req.query;
-    
+
     if (!q) {
       return res.status(400).json({
         success: false,
-        error: 'Término de búsqueda requerido'
+        error: "Término de búsqueda requerido",
       });
     }
 
     const usuarios = await usuarioModel.searchUsuarios(q);
-    
+
     res.json({
       success: true,
       data: usuarios,
       count: usuarios.length,
-      searchTerm: q
+      searchTerm: q,
     });
   } catch (error) {
-    console.error('Error en searchUsuarios:', error);
+    console.error("Error en searchUsuarios:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -392,5 +452,5 @@ module.exports = {
   createUsuario,
   updateUsuario,
   deleteUsuario,
-  searchUsuarios
+  searchUsuarios,
 };
